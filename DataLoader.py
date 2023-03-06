@@ -26,7 +26,7 @@ class myDataset(Dataset):
         encoded_text = tokenizer(
             uttr,
             add_special_tokens=True,
-            max_length=40,
+            max_length=20,
             padding='max_length',
             truncation=True,
             return_token_type_ids=False,

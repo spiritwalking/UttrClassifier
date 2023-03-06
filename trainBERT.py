@@ -1,3 +1,4 @@
+import torch
 from transformers import BertTokenizerFast, BertForSequenceClassification
 from torch.optim import AdamW
 from DataLoader import get_dataloader
@@ -18,6 +19,7 @@ def train_epoch(model, optimizer, tr_loader, device):
 
         loss = output.loss
         loss.backward()
+        optimizer.step()
         train_loss += loss.item()
 
     return train_loss / len(tr_loader)
@@ -30,18 +32,19 @@ def evaluate(model, val_loader, device):
     val_labels = []
 
     for batch in val_loader:
-        batch = tuple(t.to(device) for t in batch)
-        X, y, attention_mask = batch
-        output = model(X, attention_mask=attention_mask, labels=y)
-        loss = output.loss
+        with torch.no_grad():
+            batch = tuple(t.to(device) for t in batch)
+            X, y, attention_mask = batch
+            output = model(X, attention_mask=attention_mask, labels=y)
+            loss = output.loss
 
-        logits = output.logits
-        preds = logits.argmax(dim=1)
+            logits = output.logits
+            preds = logits.argmax(dim=1)
 
-        val_loss += loss.item()
+            val_loss += loss.item()
 
-        val_preds.extend(preds.cpu().tolist())
-        val_labels.extend(y.cpu().tolist())
+            val_preds.extend(preds.cpu().tolist())
+            val_labels.extend(y.cpu().tolist())
 
     accuracy = accuracy_score(val_labels, val_preds)
     return val_loss / len(val_loader), accuracy
@@ -54,9 +57,7 @@ def train_BERT(tr_loader, val_loader, epochs, device):
     for epoch in range(epochs):
         train_loss = train_epoch(model, optimizer, tr_loader, device)
         val_loss, accuracy = evaluate(model, val_loader, device)
-        print(
-            "[{:03d}/{:03d}] Train loss: {:3.6f} | Val loss: {:3.6f} Acc: {:3.6f}".format(epoch + 1, epochs, train_loss,
-                                                                                          val_loss, accuracy))
+        print(f"[{epoch + 1:03d}/{epochs:03d}] Train loss: {train_loss:3.6f} | Val loss: {val_loss:3.6f} Acc: {accuracy:3.6f}")
 
 
 if __name__ == "__main__":
