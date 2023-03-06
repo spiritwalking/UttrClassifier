@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="0d03cc09-c50a-4f0e-af12-241899687c1f" name="uttrclassifier">
+        <fileTransfer accessType="SFTP" host="cip192" port="22" sshConfigId="795478e6-f743-46c5-bf32-da125606589a" sshConfig="cyye@cip192:22 agent" authAgent="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
