@@ -37,15 +37,18 @@ class myDataset(Dataset):
         topic2label = {'体育': 0, '娱乐': 1, '科技': 2, '游戏': 3, '教育': 4, '健康': 5}
         label = topic2label[topic]
 
-        return encoded_text['input_ids'], label, encoded_text['attention_mask']
+        return encoded_text['input_ids'][0], label, encoded_text['attention_mask'][0]
 
 
 def get_dataloader(ratio, batch_size, n_worfers):
     my_dataset = myDataset()
 
-    trainlen = int(ratio * len(my_dataset))
-    lengths = [trainlen, len(my_dataset) - trainlen]
-    trainset, validset = random_split(my_dataset, lengths)
+    # trainlen = int(ratio * len(my_dataset))
+    # lengths = [trainlen, len(my_dataset) - trainlen]
+
+    # TODO: Change lengths
+    lengths = [100, 100, len(my_dataset)-200]
+    trainset, validset, a = random_split(my_dataset, lengths)
 
     train_loader = DataLoader(
         trainset,
@@ -57,10 +60,9 @@ def get_dataloader(ratio, batch_size, n_worfers):
     valid_loader = DataLoader(
         validset,
         batch_size=batch_size,
-        shuffle=True,
         num_workers=n_worfers
     )
-    return train_loader, train_loader
+    return train_loader, valid_loader
 
 
 if __name__ == "__main__":
