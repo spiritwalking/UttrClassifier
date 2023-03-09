@@ -11,6 +11,7 @@ class myDataset(Dataset):
         dialog_list = json.loads(codecs.open("data/dialog_release.json", "r", "utf-8").read())
         document_list = json.loads(codecs.open("data/document_url_release.json", "r", "utf-8").read())
 
+        self.tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
         self.data = []
         for dialog in dialog_list:
             for uttr in dialog['content'][2:-2]:
@@ -22,8 +23,7 @@ class myDataset(Dataset):
 
     def __getitem__(self, item):
         uttr, topic = self.data[item]
-        tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
-        encoded_text = tokenizer(
+        encoded_text = self.tokenizer(
             uttr,
             add_special_tokens=True,
             max_length=20,
@@ -43,12 +43,10 @@ class myDataset(Dataset):
 def get_dataloader(ratio, batch_size, n_worfers):
     my_dataset = myDataset()
 
-    # trainlen = int(ratio * len(my_dataset))
-    # lengths = [trainlen, len(my_dataset) - trainlen]
+    trainlen = int(ratio * len(my_dataset))
+    lengths = [trainlen, len(my_dataset) - trainlen]
 
-    # TODO: Change lengths
-    lengths = [100, 100, len(my_dataset)-200]
-    trainset, validset, a = random_split(my_dataset, lengths)
+    trainset, validset = random_split(my_dataset, lengths)
 
     train_loader = DataLoader(
         trainset,
@@ -66,7 +64,7 @@ def get_dataloader(ratio, batch_size, n_worfers):
 
 
 if __name__ == "__main__":
-    train_loader, valid_loader = get_dataloader(0.9, batch_size=32, n_worfers=2)
+    train_loader, valid_loader = get_dataloader(0.9, batch_size=16, n_worfers=2)
     for X, y, mask in train_loader:
         print(X)
         break

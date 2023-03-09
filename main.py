@@ -3,10 +3,16 @@
 # 按 ⌃R 执行或将其替换为您的代码。
 # 按 双击 ⇧ 在所有地方搜索类、文件、工具窗口、操作和设置。
 
+from tqdm import tqdm
+import time
 
 def print_hi(name):
     # 在下面的代码行中使用断点来调试脚本。
-    print(f'Hi, {name}')  # 按 ⌘F8 切换断点。
+
+    pbar = tqdm(range(10))
+    for i in pbar:
+        time.sleep(0.5)
+        pbar.set_description(f"Processing item {i}")
 
 
 # 按间距中的绿色按钮以运行脚本。
