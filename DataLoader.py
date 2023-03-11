@@ -26,7 +26,7 @@ class myDataset(Dataset):
         encoded_text = self.tokenizer(
             uttr,
             add_special_tokens=True,
-            max_length=20,
+            max_length=30,
             padding='max_length',
             truncation=True,
             return_token_type_ids=False,
@@ -40,7 +40,7 @@ class myDataset(Dataset):
         return encoded_text['input_ids'][0], label, encoded_text['attention_mask'][0]
 
 
-def get_dataloader(ratio, batch_size, n_worfers):
+def get_dataloader(ratio, batch_size, n_worfers, is_dataset=False):
     my_dataset = myDataset()
 
     trainlen = int(ratio * len(my_dataset))
@@ -60,7 +60,10 @@ def get_dataloader(ratio, batch_size, n_worfers):
         batch_size=batch_size,
         num_workers=n_worfers
     )
-    return train_loader, valid_loader
+    if is_dataset:
+        return trainset, validset
+    else:
+        return train_loader, valid_loader
 
 
 if __name__ == "__main__":
