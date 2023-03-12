@@ -1,5 +1,5 @@
 import torch
-from DataLoader import get_dataloader
+from data_loader import get_dataloader
 from utils import fix_seed, get_device
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, classification_report, confusion_matrix

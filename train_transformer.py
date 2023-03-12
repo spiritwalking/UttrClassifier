@@ -3,9 +3,10 @@ import torch.nn as nn
 from model import TransformerModel
 from sklearn.metrics import accuracy_score
 from utils import get_device
-from DataLoader import get_dataloader
+from data_loader import get_dataloader
 from torch.optim import AdamW
 from tqdm import tqdm
+from transformers import BertTokenizerFast
 
 
 def train_epoch(model, optimizer, tr_loader, device, criterion):
@@ -31,7 +32,7 @@ def evaluate(model, val_loader, device, criterion):
     val_preds = []
     val_labels = []
 
-    for X, y, _ in val_loader:
+    for X, y, _ in tqdm(val_loader):
         with torch.no_grad():
             X, y = X.to(device, dtype=torch.float32), y.to(device)
             output = model(X)
@@ -60,6 +61,8 @@ def train_Transformer(tr_loader, val_loader, epochs, device):
 
 
 if __name__ == "__main__":
-    device = get_device()
-    train_loader, val_loader = get_dataloader(0.9, 16, 2)
+    # device = get_device()
+    device = 'cuda:3'
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
+    train_loader, val_loader = get_dataloader(0.9, 32, 2, tokenizer)
     train_Transformer(train_loader, val_loader, 10, device)
