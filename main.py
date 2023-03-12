@@ -1,17 +1,18 @@
 import torch
-from transformers import BertForSequenceClassification, BertConfig
+from transformers import BertForSequenceClassification, BertConfig, BertTokenizerFast
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification
 from torch.optim import AdamW
 from DataLoader import get_dataloader
 from utils import fix_seed, get_device
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from torch.optim.lr_scheduler import LinearLR
-from torch.nn import CrossEntropyLoss
 
 
-def train_epoch(model, optimizer, tr_loader, device, criterion):
+model_name = 'xlm-roberta-base'
+
+def train_epoch(model, optimizer, tr_loader, device):
     model.train()
-
 
     train_loss = 0
     pbar = tqdm(tr_loader)
@@ -22,7 +23,7 @@ def train_epoch(model, optimizer, tr_loader, device, criterion):
 
         output = model(X, attention_mask=attention_mask, labels=y)
 
-        loss = criterion(output, y)
+        loss = output.loss
         loss.backward()
         optimizer.step()
 
@@ -60,16 +61,15 @@ def evaluate(model, val_loader, device):
 
 
 def train_BERT(tr_loader, val_loader, epochs, device):
-    config = BertConfig.from_pretrained('bert-base-chinese', num_labels=6, hidden_dropout_prob=0.3,
+    config = AutoConfig.from_pretrained(model_name, num_labels=6, hidden_dropout_prob=0.3,
                                         classifier_dropout=0.3, attention_probs_dropout_prob=0.3)
-    model = BertForSequenceClassification.from_pretrained('bert-base-chinese', config=config).to(device)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config).to(device)
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.015)
-    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=10)
-    criterion = CrossEntropyLoss(weight=torch.tensor([1,1,1,5,1,5],dtype=torch.float))
+    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=5)
 
     best_acc = 0
     for epoch in range(epochs):
-        train_loss = train_epoch(model, optimizer, tr_loader, device, criterion)
+        train_loss = train_epoch(model, optimizer, tr_loader, device)
         val_loss, accuracy, scores = evaluate(model, val_loader, device)
         scheduler.step()
 
@@ -83,9 +83,10 @@ def train_BERT(tr_loader, val_loader, epochs, device):
 
 if __name__ == "__main__":
     fix_seed(42)
-    device = 'cuda'
+    device = 'cuda:7'
     print(f"Using device: {device}")
     print("Start preparing data")
-    train_loader, val_loader = get_dataloader(0.9, 32, 2)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    train_loader, val_loader = get_dataloader(0.9, 32, 2, tokenizer)
     print("Start training")
     train_BERT(train_loader, val_loader, 20, device)

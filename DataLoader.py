@@ -1,17 +1,16 @@
 import json
 import codecs
 from torch.utils.data import Dataset
-import torch
 from torch.utils.data import DataLoader, random_split
 from transformers import BertTokenizerFast
 
 
-class myDataset(Dataset):
-    def __init__(self):
+class NaturalConvDataset(Dataset):
+    def __init__(self, tokenizer):
         dialog_list = json.loads(codecs.open("data/dialog_release.json", "r", "utf-8").read())
         document_list = json.loads(codecs.open("data/document_url_release.json", "r", "utf-8").read())
 
-        self.tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
+        self.tokenizer = tokenizer
         self.data = []
         for dialog in dialog_list:
             for uttr in dialog['content'][2:-2]:
@@ -40,8 +39,45 @@ class myDataset(Dataset):
         return encoded_text['input_ids'][0], label, encoded_text['attention_mask'][0]
 
 
-def get_dataloader(ratio, batch_size, n_worfers, is_dataset=False):
-    my_dataset = myDataset()
+class MyDataset(Dataset):
+    def __init__(self, tokenizer):
+        self.data = []
+        with open('data/data.json', 'r', encoding='utf-8') as f:
+            dialogs = json.load(f)
+            for dialog in dialogs:
+                topic = dialog['topic']
+                if topic in ['体育', '科技', '教育']:
+                    dialog['text'] = dialog['text'][2:-2]
+
+                for uttr in dialog['text']:
+                    self.data.append([uttr, topic])
+
+        self.tokenizer = tokenizer
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, item):
+        uttr, topic = self.data[item]
+        encoded_text = self.tokenizer(
+            uttr,
+            add_special_tokens=True,
+            max_length=30,
+            padding='max_length',
+            truncation=True,
+            return_token_type_ids=False,
+            return_attention_mask=True,
+            return_tensors='pt'  # 返回PyTorch张量
+        )
+
+        topic2label = {'体育': 0, '科技': 1, '教育': 2, '旅行': 3, '电影': 4, '音乐': 5}
+        label = topic2label[topic]
+
+        return encoded_text['input_ids'][0], label, encoded_text['attention_mask'][0]
+
+
+def get_dataloader(ratio, batch_size, n_worfers, tokenizer, is_dataset=False):
+    my_dataset = MyDataset(tokenizer)
 
     trainlen = int(ratio * len(my_dataset))
     lengths = [trainlen, len(my_dataset) - trainlen]
@@ -67,7 +103,8 @@ def get_dataloader(ratio, batch_size, n_worfers, is_dataset=False):
 
 
 if __name__ == "__main__":
-    train_loader, valid_loader = get_dataloader(0.9, batch_size=16, n_worfers=2)
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
+    train_loader, valid_loader = get_dataloader(0.9, batch_size=32, n_worfers=0, tokenizer=tokenizer)
     for X, y, mask in train_loader:
         print(X)
         break

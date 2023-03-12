@@ -34,9 +34,9 @@ if __name__ == "__main__":
     device = 'cuda'
     print(f"Using device: {device}")
 
-    train_loader, val_loader = get_dataloader(0.9, 64, 2)
+    train_loader, val_loader = get_dataloader(0.9, 32, 2)
 
-    model = torch.load('best_model.pth').to('cuda')
+    model = torch.load('model.pth').to('cuda')
     accuracy, scores, report, conf_matrix = test_model(model, val_loader, device)
 
     print(report)

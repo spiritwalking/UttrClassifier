@@ -1,5 +1,5 @@
 import torch
-from transformers import BertForSequenceClassification, BertConfig
+from transformers import BertForSequenceClassification, BertConfig, BertTokenizerFast
 from torch.optim import AdamW
 from DataLoader import get_dataloader
 from utils import fix_seed, get_device
@@ -62,7 +62,7 @@ def train_BERT(tr_loader, val_loader, epochs, device):
                                         classifier_dropout=0.3, attention_probs_dropout_prob=0.3)
     model = BertForSequenceClassification.from_pretrained('bert-base-chinese', config=config).to(device)
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.015)
-    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=10)
+    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=5)
 
     best_acc = 0
     for epoch in range(epochs):
@@ -83,6 +83,7 @@ if __name__ == "__main__":
     device = get_device()
     print(f"Using device: {device}")
     print("Start preparing data")
-    train_loader, val_loader = get_dataloader(0.9, 32, 2)
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
+    train_loader, val_loader = get_dataloader(0.9, 32, 2, tokenizer)
     print("Start training")
     train_BERT(train_loader, val_loader, 20, device)
