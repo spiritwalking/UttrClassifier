@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification
 from torch.optim import AdamW
 from data_loader import get_dataloader
-from utils import fix_seed, get_device
+from utils import fix_seed
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from torch.optim.lr_scheduler import LinearLR
@@ -58,20 +58,23 @@ def evaluate(model, val_loader, device):
     return val_loss / len(val_loader), accuracy, scores[:2]
 
 
-def train_model(tr_loader, val_loader, epochs, device):
-    config = AutoConfig.from_pretrained(model_name, num_labels=6, hidden_dropout_prob=0.3,
-                                        classifier_dropout=0.3, attention_probs_dropout_prob=0.3)
+def train_model(tr_loader, val_loader, args):
+    device = args.device
+    model_name = args.model_name
+
+    config = AutoConfig.from_pretrained(model_name, num_labels=6, hidden_dropout_prob=args.drop_prob,
+                                        classifier_dropout=args.drop_prob, attention_probs_dropout_prob=args.drop_prob)
     model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config).to(device)
-    optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.015)
-    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=5)
+    optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=args.weight_decay)
+    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=10)
 
     best_acc = 0
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         train_loss = train_epoch(model, optimizer, tr_loader, device)
         val_loss, accuracy, scores = evaluate(model, val_loader, device)
         scheduler.step()
 
-        print(f"[{epoch + 1:03d}/{epochs:03d}] Train loss: {train_loss:.6f} | Val loss: {val_loss:.6f} "
+        print(f"[{epoch + 1:03d}/{args.epochs:03d}] Train loss: {train_loss:.6f} | Val loss: {val_loss:.6f} "
               f"Acc: {accuracy:.6f} Precision: {scores[0]:.6f} Recall: {scores[1]:.6f}")
         if accuracy > best_acc:
             torch.save(model, model_name.split('/')[-1] + '_model.pth')
@@ -85,6 +88,8 @@ def set_args():
     parser.add_argument('--model_name', default='bert-base-chinese', type=str, help='使用什么预训练模型')
     parser.add_argument('--epochs', default=10, type=int, help='训练的epoch数目')
     parser.add_argument('--batch_size', default=32, type=int, help='训练的batch size')
+    parser.add_argument('--weight_decay', default=0.015, type=float, help='正则项')
+    parser.add_argument('--drop_prob', default=0.3, type=float, help='dropout的概率')
 
     args = parser.parse_args()
     return args
@@ -93,13 +98,11 @@ def set_args():
 if __name__ == "__main__":
     args = set_args()
     fix_seed(42)
-    device = args.device
-    model_name = args.model_name
-    print(f"Using device: {device} and pre-trained model: {model_name}")
+    print(f"Using device: {args.device} and pre-trained model: {args.model_name}")
 
     print("Start preparing data")
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     train_loader, val_loader = get_dataloader(0.9, args.batch_size, 2, tokenizer)
 
     print("Start training")
-    train_model(train_loader, val_loader, args.epochs, device)
+    train_model(train_loader, val_loader, args)

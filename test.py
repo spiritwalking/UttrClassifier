@@ -3,6 +3,9 @@ from data_loader import get_dataloader
 from utils import fix_seed, get_device
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, classification_report, confusion_matrix
+import argparse
+from transformers import AutoTokenizer
+
 
 
 def test_model(model, val_loader, device):
@@ -29,12 +32,22 @@ def test_model(model, val_loader, device):
     return accuracy, scores[:3], report, cm
 
 
+def set_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name', default='bert-base-chinese', type=str, help='使用什么预训练模型')
+
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
+    args = set_args()
     fix_seed(42)
     device = 'cuda'
     print(f"Using device: {device}")
 
-    train_loader, val_loader = get_dataloader(0.9, 32, 2)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    train_loader, val_loader = get_dataloader(0.9, 32, 2, tokenizer)
 
     model = torch.load('model.pth').to('cuda')
     accuracy, scores, report, conf_matrix = test_model(model, val_loader, device)

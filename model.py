@@ -7,7 +7,7 @@ import math
 class TransformerModel(nn.Module):
     def __init__(self, d_model=128, num_layers=2):
         super().__init__()
-        self.fc = nn.Linear(20, d_model)
+        self.fc = nn.Linear(30, d_model)
         self.encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(d_model=d_model, nhead=2, dim_feedforward=512, dropout=0.1),
             num_layers=num_layers)
@@ -16,6 +16,8 @@ class TransformerModel(nn.Module):
 
     def forward(self, input):
         output = self.fc(input)
+        output = output.transpose(0, 1)
         output = self.encoder(output)
+        output = output.transpose(0, 1)
         output = self.pred_layer(output)
         return output

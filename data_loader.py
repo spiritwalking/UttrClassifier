@@ -76,13 +76,18 @@ class MyDataset(Dataset):
         return encoded_text['input_ids'][0], label, encoded_text['attention_mask'][0]
 
 
-def get_dataloader(ratio, batch_size, n_worfers, tokenizer, is_dataset=False):
+def get_dataset(ratio, tokenizer):
     my_dataset = MyDataset(tokenizer)
 
     trainlen = int(ratio * len(my_dataset))
     lengths = [trainlen, len(my_dataset) - trainlen]
 
     trainset, validset = random_split(my_dataset, lengths)
+    return trainset, validset
+
+
+def get_dataloader(ratio, batch_size, n_worfers, tokenizer):
+    trainset, validset = get_dataset(ratio, tokenizer)
 
     train_loader = DataLoader(
         trainset,
@@ -96,10 +101,8 @@ def get_dataloader(ratio, batch_size, n_worfers, tokenizer, is_dataset=False):
         batch_size=batch_size,
         num_workers=n_worfers
     )
-    if is_dataset:
-        return trainset, validset
-    else:
-        return train_loader, valid_loader
+
+    return train_loader, valid_loader
 
 
 if __name__ == "__main__":

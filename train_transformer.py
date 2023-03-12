@@ -62,7 +62,7 @@ def train_Transformer(tr_loader, val_loader, epochs, device):
 
 if __name__ == "__main__":
     # device = get_device()
-    device = 'cuda:3'
+    device = 'cuda:7'
     tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
-    train_loader, val_loader = get_dataloader(0.9, 32, 2, tokenizer)
+    train_loader, val_loader = get_dataloader(0.9, 64, 4, tokenizer)
     train_Transformer(train_loader, val_loader, 10, device)
