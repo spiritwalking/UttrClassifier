@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, get_linear_schedule_with_warmup
 from torch.optim import AdamW
 from data_loader import get_dataloader
 from utils import fix_seed
@@ -9,7 +9,7 @@ from torch.optim.lr_scheduler import LinearLR
 import argparse
 
 
-def train_epoch(model, optimizer, tr_loader, device):
+def train_epoch(model, optimizer, scheduler, tr_loader, device):
     model.train()
 
     train_loss = 0
@@ -24,6 +24,7 @@ def train_epoch(model, optimizer, tr_loader, device):
         loss = output.loss
         loss.backward()
         optimizer.step()
+        scheduler.step()
 
         # debug
         pbar.set_description(f"Loss: {loss.item():.6f}")
@@ -64,15 +65,18 @@ def train_model(tr_loader, val_loader, args):
 
     config = AutoConfig.from_pretrained(model_name, num_labels=6, hidden_dropout_prob=args.drop_prob,
                                         classifier_dropout=args.drop_prob, attention_probs_dropout_prob=args.drop_prob)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config).to(device)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config, ignore_mismatched_sizes=True).to(device)
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=args.weight_decay)
-    scheduler = LinearLR(optimizer, start_factor=1, end_factor=0.1, total_iters=10)
+    lr_scheduler = get_linear_schedule_with_warmup(
+        optimizer=optimizer,
+        num_warmup_steps=1000,
+        num_training_steps=(len(tr_loader) * args.epochs)
+    )
 
     best_acc = 0
     for epoch in range(args.epochs):
-        train_loss = train_epoch(model, optimizer, tr_loader, device)
+        train_loss = train_epoch(model, optimizer, lr_scheduler, tr_loader, device)
         val_loss, accuracy, scores = evaluate(model, val_loader, device)
-        scheduler.step()
 
         print(f"[{epoch + 1:03d}/{args.epochs:03d}] Train loss: {train_loss:.6f} | Val loss: {val_loss:.6f} "
               f"Acc: {accuracy:.6f} Precision: {scores[0]:.6f} Recall: {scores[1]:.6f}")
@@ -86,10 +90,10 @@ def set_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='cuda:0', type=str, help='使用哪些显卡')
     parser.add_argument('--model_name', default='bert-base-chinese', type=str, help='使用什么预训练模型')
-    parser.add_argument('--epochs', default=10, type=int, help='训练的epoch数目')
+    parser.add_argument('--epochs', default=20, type=int, help='训练的epoch数目')
     parser.add_argument('--batch_size', default=32, type=int, help='训练的batch size')
-    parser.add_argument('--weight_decay', default=0.015, type=float, help='正则项')
-    parser.add_argument('--drop_prob', default=0.3, type=float, help='dropout的概率')
+    parser.add_argument('--weight_decay', default=0.002, type=float, help='正则项')
+    parser.add_argument('--drop_prob', default=0.4, type=float, help='dropout的概率')
 
     args = parser.parse_args()
     return args
