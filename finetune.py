@@ -62,15 +62,16 @@ def evaluate(model, val_loader, device):
 def train_model(tr_loader, val_loader, args):
     device = args.device
     model_name = args.model_name
+    total_steps = len(tr_loader) * args.epochs
 
     config = AutoConfig.from_pretrained(model_name, num_labels=6, hidden_dropout_prob=args.drop_prob,
                                         classifier_dropout=args.drop_prob, attention_probs_dropout_prob=args.drop_prob)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config, ignore_mismatched_sizes=True).to(device)
-    optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=args.weight_decay)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=config).to(device)
+    optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     lr_scheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
-        num_warmup_steps=1000,
-        num_training_steps=(len(tr_loader) * args.epochs)
+        num_warmup_steps=total_steps*0.05,
+        num_training_steps=total_steps
     )
 
     best_acc = 0
@@ -81,7 +82,7 @@ def train_model(tr_loader, val_loader, args):
         print(f"[{epoch + 1:03d}/{args.epochs:03d}] Train loss: {train_loss:.6f} | Val loss: {val_loss:.6f} "
               f"Acc: {accuracy:.6f} Precision: {scores[0]:.6f} Recall: {scores[1]:.6f}")
         if accuracy > best_acc:
-            torch.save(model, model_name.split('/')[-1] + '_model.pth')
+            torch.save(model, model_name.split('/')[-1] + '_bc_model.pth')
             print(f"Best model saved(accuracy: {accuracy})")
             best_acc = accuracy
 
@@ -93,7 +94,8 @@ def set_args():
     parser.add_argument('--epochs', default=20, type=int, help='训练的epoch数目')
     parser.add_argument('--batch_size', default=32, type=int, help='训练的batch size')
     parser.add_argument('--weight_decay', default=0.002, type=float, help='正则项')
-    parser.add_argument('--drop_prob', default=0.4, type=float, help='dropout的概率')
+    parser.add_argument('--drop_prob', default=0.3, type=float, help='dropout的概率')
+    parser.add_argument('--lr', default=2e-5, type=float, help='学习率')
 
     args = parser.parse_args()
     return args
@@ -106,7 +108,7 @@ if __name__ == "__main__":
 
     print("Start preparing data")
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-    train_loader, val_loader = get_dataloader(0.9, args.batch_size, 2, tokenizer)
+    train_loader, val_loader = get_dataloader(0.975, args.batch_size, 2, tokenizer)
 
     print("Start training")
     train_model(train_loader, val_loader, args)

@@ -3,6 +3,7 @@ import codecs
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader, random_split
 from transformers import BertTokenizerFast
+import random
 
 
 class NaturalConvDataset(Dataset):
@@ -52,6 +53,7 @@ class MyDataset(Dataset):
                 for uttr in dialog['text']:
                     self.data.append([uttr, topic])
 
+        # self.data = balance_data(self.data)
         self.tokenizer = tokenizer
 
     def __len__(self):
@@ -84,6 +86,14 @@ def get_dataset(ratio, tokenizer):
 
     trainset, validset = random_split(my_dataset, lengths)
     return trainset, validset
+
+
+def balance_data(data):
+    sport = [u for u in data if u[1] == '体育']
+    not_sport = [u for u in data if u[1] != '体育']
+    sport = random.sample(sport, 80000)
+    not_sport.extend(sport)
+    return not_sport
 
 
 def get_dataloader(ratio, batch_size, n_worfers, tokenizer):
