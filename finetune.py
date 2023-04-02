@@ -70,7 +70,7 @@ def train_model(tr_loader, val_loader, args):
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     lr_scheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
-        num_warmup_steps=total_steps*0.05,
+        num_warmup_steps=int(total_steps*0.05),
         num_training_steps=total_steps
     )
 
@@ -82,7 +82,7 @@ def train_model(tr_loader, val_loader, args):
         print(f"[{epoch + 1:03d}/{args.epochs:03d}] Train loss: {train_loss:.6f} | Val loss: {val_loss:.6f} "
               f"Acc: {accuracy:.6f} Precision: {scores[0]:.6f} Recall: {scores[1]:.6f}")
         if accuracy > best_acc:
-            torch.save(model, model_name.split('/')[-1] + '_bc_model.pth')
+            torch.save(model, model_name.split('/')[-1] + '_model.pth')
             print(f"Best model saved(accuracy: {accuracy})")
             best_acc = accuracy
 
