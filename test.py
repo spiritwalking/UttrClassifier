@@ -7,7 +7,6 @@ import argparse
 from transformers import AutoTokenizer
 
 
-
 def test_model(model, val_loader, device):
     model.eval()
     val_preds = []

@@ -32,7 +32,16 @@ def main():
     uttr_dataset = get_dataset()
     tokenized_datasets = uttr_dataset.map(tokenize_function, batched=True, remove_columns=['text'])
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
-    training_args = TrainingArguments(output_dir="test-trainer", evaluation_strategy="epoch",num_train_epochs=10)
+    training_args = TrainingArguments(
+        output_dir="test-trainer",
+        evaluation_strategy="epoch",
+        save_strategy='epoch',
+        num_train_epochs=10,
+        learning_rate=2e-5,
+        weight_decay=0.001,
+        warmup_steps=2000,
+    )
+
     trainer = Trainer(
         model,
         training_args,
@@ -40,10 +49,7 @@ def main():
         eval_dataset=tokenized_datasets["test"],
         data_collator=data_collator,
         tokenizer=tokenizer,
-        compute_metrics=compute_metrics,
-        learning_rate=2e-5,
-        weight_decay=0.001,
-        warmup_steps=2000
+        compute_metrics=compute_metrics
     )
     trainer.train()
 
