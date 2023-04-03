@@ -11,7 +11,7 @@ def gen():
                 dialog['text'] = dialog['text'][2:-2]
 
             for uttr in dialog['text']:
-                if len(uttr) < 10:  # 滤除信息量较少的句子
+                if len(uttr) <= 12:  # 滤除信息量较少的句子
                     continue
                 yield {"text": uttr, "label": topic}
 

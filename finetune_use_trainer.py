@@ -1,6 +1,6 @@
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding,
-                          Trainer, TrainingArguments)
-import evaluate
+                          Trainer, TrainingArguments, BertTokenizer)
+from sklearn.metrics import accuracy_score
 import numpy as np
 import os
 from my_dataset import get_dataset
@@ -10,7 +10,7 @@ import warnings
 os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6,7"
 warnings.filterwarnings("ignore")
 
-checkpoint = "bert-base-chinese"
+checkpoint = "nghuyong/ernie-1.0-base-zh"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=6)
 
@@ -20,11 +20,10 @@ def tokenize_function(example):
 
 
 def compute_metrics(eval_preds):
-    metric = evaluate.load("accuracy")
     logits, labels = eval_preds
-    print(f"len{len(labels)}")
     predictions = np.argmax(logits, axis=-1)
-    return metric.compute(predictions=predictions, references=labels)
+    accuracy = accuracy_score(labels, predictions)
+    return {'accuracy': accuracy}
 
 
 def main():
@@ -33,13 +32,15 @@ def main():
     tokenized_datasets = uttr_dataset.map(tokenize_function, batched=True, remove_columns=['text'])
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
     training_args = TrainingArguments(
-        output_dir="test-trainer",
+        output_dir="ernie1",
         evaluation_strategy="epoch",
         save_strategy='epoch',
         num_train_epochs=10,
-        learning_rate=2e-5,
-        weight_decay=0.001,
-        warmup_steps=2000,
+        learning_rate=5e-5,
+        weight_decay=0.03,
+        warmup_steps=1000,
+        per_device_train_batch_size=32,
+        per_device_eval_batch_size=32
     )
 
     trainer = Trainer(
