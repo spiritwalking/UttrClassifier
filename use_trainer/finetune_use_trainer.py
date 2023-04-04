@@ -4,18 +4,16 @@ from sklearn.metrics import accuracy_score
 import numpy as np
 import os
 from my_dataset import get_dataset
+from trainer_utils import fix_seed
 import warnings
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6,7"
+fix_seed(42)
 warnings.filterwarnings("ignore")
 
 checkpoint = "nghuyong/ernie-1.0-base-zh"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-
-
-def model_init():
-    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=6)
-    return model
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=6)
 
 
 def tokenize_function(example):
@@ -39,14 +37,14 @@ def main():
         save_strategy='epoch',
         num_train_epochs=10,
         learning_rate=5e-5,
-        weight_decay=0.005,
-        warmup_steps=1000,
+        weight_decay=0.002,
+        warmup_steps=500,
         per_device_train_batch_size=32,
         per_device_eval_batch_size=32
     )
 
     trainer = Trainer(
-        model_init=model_init,
+        model,
         args=training_args,
         train_dataset=tokenized_datasets["train"],
         eval_dataset=tokenized_datasets["test"],

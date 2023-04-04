@@ -3,15 +3,18 @@ from transformers import (AutoTokenizer, AutoModelForSequenceClassification, Dat
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import numpy as np
 import os
+import json
 from my_dataset import get_dataset
+from trainer_utils import fix_seed
 import warnings
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+fix_seed(42)  # 先设置可见GPU，再固定随机种子
 warnings.filterwarnings("ignore")
 
-checkpoint = "nghuyong/ernie-1.0-base-zh"
+checkpoint = "ernie/checkpoint-8472"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-model = AutoModelForSequenceClassification.from_pretrained("ernie1/checkpoint-10150")
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
 
 
 def tokenize_function(example):
@@ -31,7 +34,25 @@ def compute_metrics(eval_preds):
 
 def classifier_pipeline(text):
     classifier = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
-    print(classifier(text))
+    return classifier(text)
+
+
+def model_evaluate(trainer, val_set):
+    # trainer.evaluate()
+    predictions, labels, metrics = trainer.predict(val_set)
+    print(metrics['test_accuracy'])
+
+    topic2label = ['音乐', '电影', '旅行', '教育', '科技', '体育']
+    wrong_predictions = []
+    for i, prediction in enumerate(predictions):
+        predicted_label = prediction.argmax()
+        true_label = int(labels[i])
+        if predicted_label != true_label:
+            topic = topic2label[val_set[i]['label']]
+            wrong_predictions.append([val_set[i]['text'], topic])
+
+    with open("wrong.json", 'w') as f:
+        json.dump(wrong_predictions, f, ensure_ascii=False, indent=2)
 
 
 def main():
@@ -40,7 +61,7 @@ def main():
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
     training_args = TrainingArguments(
         output_dir='test-ernie',
-        resume_from_checkpoint="ernie1/checkpoint-6759",
+        resume_from_checkpoint=checkpoint,
         per_device_eval_batch_size=32
     )
 
@@ -52,23 +73,13 @@ def main():
         tokenizer=tokenizer,
         compute_metrics=compute_metrics
     )
-    # trainer.evaluate()
-    predictions, labels, metrics = trainer.predict(tokenized_datasets["test"])
-    print(metrics['test_accuracy'])
 
-    # topic2label = ['音乐', '电影', '旅行', '教育', '科技', '体育']
-    # wrong_predictions = []
-    # for i, prediction in enumerate(predictions):
-    #     predicted_label = prediction.argmax()
-    #     true_label = int(labels[i])
-    #     if predicted_label != true_label:
-    #         topic = topic2label[tokenized_datasets["test"][i]['label']]
-    #         wrong_predictions.append([tokenized_datasets["test"][i]['text'], topic])
-    #
-    # with open("wrong.json", 'w') as f:
-    #     json.dump(wrong_predictions, f, ensure_ascii=False, indent=2)
+    model_evaluate(trainer, tokenized_datasets["train"])
 
 
 if __name__ == "__main__":
-    # main()
-    classifier_pipeline("你好，你看过《非常嫌疑犯》吗？")
+    main()
+    # while True:
+    #     request = input()
+    #     predict = classifier_pipeline(request)
+    #     print(predict)
