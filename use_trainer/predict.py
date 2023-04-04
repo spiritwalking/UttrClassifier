@@ -1,10 +1,9 @@
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification, DataCollatorWithPadding,
-                          Trainer, TrainingArguments)
+                          Trainer, TrainingArguments, pipeline)
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import numpy as np
 import os
 from my_dataset import get_dataset
-from utils import fix_seed
 import warnings
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -12,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 checkpoint = "nghuyong/ernie-1.0-base-zh"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-model = AutoModelForSequenceClassification.from_pretrained("ernie1/checkpoint-6759")
+model = AutoModelForSequenceClassification.from_pretrained("ernie1/checkpoint-10150")
 
 
 def tokenize_function(example):
@@ -30,8 +29,12 @@ def compute_metrics(eval_preds):
     return {'accuracy': accuracy}
 
 
+def classifier_pipeline(text):
+    classifier = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+    print(classifier(text))
+
+
 def main():
-    fix_seed(42)
     uttr_dataset = get_dataset()
     tokenized_datasets = uttr_dataset.map(tokenize_function, batched=True)
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -67,4 +70,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    classifier_pipeline("你好，你看过《非常嫌疑犯》吗？")

@@ -8,8 +8,8 @@ import random
 
 class NaturalConvDataset(Dataset):
     def __init__(self, tokenizer):
-        dialog_list = json.loads(codecs.open("data/dialog_release.json", "r", "utf-8").read())
-        document_list = json.loads(codecs.open("data/document_url_release.json", "r", "utf-8").read())
+        dialog_list = json.loads(codecs.open("../data/dialog_release.json", "r", "utf-8").read())
+        document_list = json.loads(codecs.open("../data/document_url_release.json", "r", "utf-8").read())
 
         self.tokenizer = tokenizer
         self.data = []
@@ -25,12 +25,10 @@ class NaturalConvDataset(Dataset):
         uttr, topic = self.data[item]
         encoded_text = self.tokenizer(
             uttr,
-            add_special_tokens=True,
             max_length=30,
             padding='max_length',
             truncation=True,
             return_token_type_ids=False,
-            return_attention_mask=True,
             return_tensors='pt'  # 返回PyTorch张量
         )
 
@@ -43,7 +41,7 @@ class NaturalConvDataset(Dataset):
 class MyDataset(Dataset):
     def __init__(self, tokenizer):
         self.data = []
-        with open('data/data.json', 'r', encoding='utf-8') as f:
+        with open('../data/data.json', 'r', encoding='utf-8') as f:
             dialogs = json.load(f)
             for dialog in dialogs:
                 topic = dialog['topic']

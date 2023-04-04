@@ -42,7 +42,7 @@ def set_args():
 if __name__ == "__main__":
     args = set_args()
     fix_seed(42)
-    device = 'cuda'
+    device = get_device()
     print(f"Using device: {device}")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)

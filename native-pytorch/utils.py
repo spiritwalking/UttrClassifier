@@ -3,7 +3,7 @@ import numpy as np
 
 
 def get_device():
-    return 'cuda:1' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+    return 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
 
 def fix_seed(seed):

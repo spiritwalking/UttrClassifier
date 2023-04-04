@@ -1,0 +1,5 @@
+finrtune 使用PyTorch训练
+
+train_from_scratch 使用PyTorch与Accelerate训练
+
+finrtune_use_trainer 使用trainer训练

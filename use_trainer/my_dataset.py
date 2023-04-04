@@ -3,7 +3,7 @@ import json
 
 
 def gen():
-    with open('data/data.json', 'r', encoding='utf-8') as f:
+    with open('../data/data.json', 'r', encoding='utf-8') as f:
         dialogs = json.load(f)
         for dialog in dialogs:
             topic = dialog['topic']
@@ -11,7 +11,7 @@ def gen():
                 dialog['text'] = dialog['text'][2:-2]
 
             for uttr in dialog['text']:
-                if len(uttr) <= 12:  # 滤除信息量较少的句子
+                if len(uttr) < 8 or (topic in ['体育', '科技'] and len(uttr) < 15):  # 滤除信息量较少的句子
                     continue
                 yield {"text": uttr, "label": topic}
 

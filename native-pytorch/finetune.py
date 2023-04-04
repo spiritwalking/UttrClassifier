@@ -94,7 +94,7 @@ def set_args():
     parser.add_argument('--epochs', default=20, type=int, help='训练的epoch数目')
     parser.add_argument('--batch_size', default=32, type=int, help='训练的batch size')
     parser.add_argument('--weight_decay', default=0.002, type=float, help='正则项')
-    parser.add_argument('--drop_prob', default=0.3, type=float, help='dropout的概率')
+    parser.add_argument('--drop_prob', default=0.2, type=float, help='dropout的概率')
     parser.add_argument('--lr', default=2e-5, type=float, help='学习率')
 
     args = parser.parse_args()
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     print("Start preparing data")
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-    train_loader, val_loader = get_dataloader(0.975, args.batch_size, 2, tokenizer)
+    train_loader, val_loader = get_dataloader(0.95, args.batch_size, 2, tokenizer)
 
     print("Start training")
     train_model(train_loader, val_loader, args)

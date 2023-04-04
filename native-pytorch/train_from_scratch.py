@@ -6,21 +6,14 @@ from utils import fix_seed
 from tqdm import tqdm
 from accelerate import Accelerator
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-import evaluate
 import warnings
 
 warnings.filterwarnings('ignore')
 
 
-def train(train_loader, val_loader):
+def train(model, train_loader, val_loader):
     accelerator = Accelerator()
-
-    epochs = 50
-    kwargs = {'num_hidden_layers': 24, 'num_attention_heads': 16,
-              'intermediate_size': 4096, 'hidden_size': 1024, 'num_labels': 6}
-    config = BertConfig(**kwargs)
-
-    model = BertForSequenceClassification(config=config)
+    epochs = 20
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=1e-4)
     lr_scheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
@@ -48,7 +41,6 @@ def train(train_loader, val_loader):
         train_loss /= len(train_loader)
 
         # evaluate model
-
         model.eval()
         val_loss = 0
         val_preds = []
@@ -75,6 +67,11 @@ if __name__ == "__main__":
     fix_seed(42)
 
     tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
+    kwargs = {'num_hidden_layers': 24, 'num_attention_heads': 16,
+              'intermediate_size': 4096, 'hidden_size': 1024, 'num_labels': 6}
+    config = BertConfig(**kwargs)
+    model = BertForSequenceClassification(config=config)
+
     train_loader, val_loader = get_dataloader(0.9, 32, 2, tokenizer)
 
-    train(train_loader, val_loader)
+    train(model, train_loader, val_loader)
