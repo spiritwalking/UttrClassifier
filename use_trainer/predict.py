@@ -12,7 +12,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 fix_seed(42)  # 先设置可见GPU，再固定随机种子
 warnings.filterwarnings("ignore")
 
-checkpoint = "ernie/checkpoint-8472"
+checkpoint = "ernie/checkpoint-14553"
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
 
@@ -42,7 +42,7 @@ def model_evaluate(trainer, val_set):
     predictions, labels, metrics = trainer.predict(val_set)
     print(metrics['test_accuracy'])
 
-    topic2label = ['音乐', '电影', '旅行', '教育', '科技', '体育']
+    topic2label = ['音乐', '电影', '旅行', '科技', '体育']
     wrong_predictions = []
     for i, prediction in enumerate(predictions):
         predicted_label = prediction.argmax()
@@ -74,7 +74,7 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    model_evaluate(trainer, tokenized_datasets["train"])
+    model_evaluate(trainer, tokenized_datasets["test"])
 
 
 if __name__ == "__main__":

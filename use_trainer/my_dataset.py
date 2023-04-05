@@ -7,11 +7,13 @@ def gen():
         dialogs = json.load(f)
         for dialog in dialogs:
             topic = dialog['topic']
-            if topic in ['体育', '科技', '教育']:
+            if topic == '教育':
+                continue
+            if topic in ['体育', '科技']:
                 dialog['text'] = dialog['text'][2:-2]
 
             for uttr in dialog['text']:
-                if len(uttr) < 8 or (topic == '体育' and len(uttr) < 15) or (topic == '科技' and len(uttr) < 12):
+                if len(uttr) < 8 or (topic in ['体育', '科技'] and len(uttr) < 12):
                     # 滤除信息量较少的句子
                     continue
                 yield {"text": uttr, "label": topic}
@@ -22,7 +24,7 @@ def get_dataset():
     # dataset = dataset.select(range(2000))
     dataset = dataset.class_encode_column("label")  # change type(label) from String to ClassLabel
 
-    topic2label = {'音乐': 0, '电影': 1, '旅行': 2, '教育': 3, '科技': 4, '体育': 5}
+    topic2label = {'音乐': 0, '电影': 1, '旅行': 2, '科技': 3, '体育': 4}
     dataset_aligned = dataset.align_labels_with_mapping(topic2label, 'label')
     return dataset_aligned.train_test_split(test_size=0.05)
 
