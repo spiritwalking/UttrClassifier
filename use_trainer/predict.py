@@ -78,8 +78,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # while True:
-    #     request = input()
-    #     predict = classifier_pipeline(request)
-    #     print(predict)
+    # main()
+    while True:
+        request = input("> ")
+        predict = classifier_pipeline(request)
+        print(f"> {predict}")

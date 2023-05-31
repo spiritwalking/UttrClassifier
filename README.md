@@ -13,7 +13,8 @@
 └── use_trainer
     ├── finetune_use_trainer.py
     ├── my_dataset.py
-    └── predict.py
+    ├── predict.py
+    └── trainer_utils.py
 ```
 
 * `data`：包含了KdConv与NaturalConv混合的共6个领域的数据集，其中`data.json`的数据信息如下：
@@ -31,7 +32,8 @@
   * `train_from_scratch.py`：使用Accelerate库从头训练模型
   * `test.py`：测试模型准确率、分辨率等指标
 * `use_trainer`：使用🤗Transformers库Trainer训练分类器
-  * `my_dataset.py`：包含基于🤗Dataset的dataset
+  * `my_dataset.py`：包含基于🤗Dataset的dataset，使用了除“教育”领域的5类数据
   * `finetune_use_trainer.py`：使用trainer微调预训练模型
   * `predict.py`：使用trainer测试模型准确率、分辨率等指标
+  * `trainer_utils.py`：包含一些工具函数
 
